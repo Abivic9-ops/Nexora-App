@@ -88,4 +88,7 @@
   html {
     @apply font-sans;
   }
+  svg.lucide {
+    stroke-width: 1.5px;
+  }
 }
