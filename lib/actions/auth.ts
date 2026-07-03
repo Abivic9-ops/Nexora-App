@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function signInWithEmail(formData: FormData) {
+  // ── Demo mode: skip Supabase, go straight to onboarding ──
+  if (!isSupabaseConfigured()) {
+    redirect("/onboarding")
+  }
+
   const supabase = await createServerClient()
 
   const email = formData.get("email") as string
@@ -21,6 +27,11 @@ export async function signInWithEmail(formData: FormData) {
 }
 
 export async function signUpWithEmail(formData: FormData) {
+  // ── Demo mode: skip Supabase, go straight to onboarding ──
+  if (!isSupabaseConfigured()) {
+    redirect("/onboarding")
+  }
+
   const supabase = await createServerClient()
 
   const email = formData.get("email") as string
@@ -38,13 +49,16 @@ export async function signUpWithEmail(formData: FormData) {
     return { error: error.message }
   }
 
-  // If email confirmation is disabled, user is signed in automatically.
-  // If enabled, show a "check your email" message.
   revalidatePath("/", "layout")
   redirect("/onboarding")
 }
 
 export async function signInWithGoogle() {
+  // ── Demo mode: skip Google OAuth, go straight to onboarding ──
+  if (!isSupabaseConfigured()) {
+    redirect("/onboarding")
+  }
+
   const supabase = await createServerClient()
 
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -58,11 +72,15 @@ export async function signInWithGoogle() {
     return { error: error.message }
   }
 
-  // Redirect to Google's OAuth consent screen
   redirect(data.url)
 }
 
 export async function signOut() {
+  // ── Demo mode: just redirect to sign-in ──
+  if (!isSupabaseConfigured()) {
+    redirect("/sign-in")
+  }
+
   const supabase = await createServerClient()
   await supabase.auth.signOut()
 

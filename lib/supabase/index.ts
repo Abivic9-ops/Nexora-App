@@ -1,4 +1,5 @@
 export { createClient as createBrowserClient } from "./client"
 export { createClient as createServerClient } from "./server"
 export { updateSession } from "./middleware"
+export { isSupabaseConfigured } from "./check"
 export type { Database, Json } from "./types"

@@ -1,16 +1,20 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
 
-  // Supabase sends an auth code in the URL after OAuth sign-in
+  // ── Demo mode: skip the code exchange, go straight to onboarding ──
+  if (!isSupabaseConfigured()) {
+    return NextResponse.redirect(`${origin}/onboarding`)
+  }
+
   const code = searchParams.get("code")
   const next = searchParams.get("next") ?? "/onboarding"
 
   if (code) {
-    // Create a server client using the request cookies
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,15 +30,12 @@ export async function GET(request: NextRequest) {
       },
     )
 
-    // Exchange the code for a session
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Successful — redirect to onboarding (or wherever next points)
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
-  // If something went wrong, redirect to sign-in with an error
   return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_failed`)
 }

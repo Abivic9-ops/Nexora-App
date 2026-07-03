@@ -2,11 +2,16 @@ import { createServerClient } from "@supabase/ssr"
 import { type EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
 
-  // Supabase sends token_hash and type in the URL for email confirmation links
+  // ── Demo mode: skip verification, go straight to onboarding ──
+  if (!isSupabaseConfigured()) {
+    return NextResponse.redirect(`${origin}/onboarding`)
+  }
+
   const token_hash = searchParams.get("token_hash")
   const type = searchParams.get("type") as EmailOtpType | null
   const next = searchParams.get("next") ?? "/onboarding"
@@ -34,6 +39,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // If verification fails, redirect to sign-in
   return NextResponse.redirect(`${origin}/sign-in?error=verification_failed`)
 }
