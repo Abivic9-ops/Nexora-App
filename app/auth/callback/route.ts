@@ -1,20 +1,16 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-
-  // ── Demo mode: skip the code exchange, go straight to onboarding ──
-  if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(`${origin}/onboarding`)
-  }
 
   const code = searchParams.get("code")
   const next = searchParams.get("next") ?? "/onboarding"
 
   if (code) {
+    const response = NextResponse.redirect(`${origin}${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -24,7 +20,10 @@ export async function GET(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value)
+              response.cookies.set(name, value, options)
+            })
           },
         },
       },
@@ -33,9 +32,10 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return response
     }
   }
 
-  return NextResponse.redirect(`${origin}/sign-in?error=auth_callback_failed`)
+  const errorResponse = NextResponse.redirect(`${origin}/sign-in?error=auth_callback_failed`)
+  return errorResponse
 }

@@ -1,11 +1,10 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
+
 import type { Habit, HabitInsert, HabitUpdate, HabitLog, HabitLogInsert } from "@/lib/supabase/types"
 
 // ── Habits ──
 
 export async function getHabits(workspaceId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("habits")
@@ -16,28 +15,24 @@ export async function getHabits(workspaceId: string) {
 }
 
 export async function getHabitById(id: string) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("habits").select("*").eq("id", id).single()
   return data as Habit | null
 }
 
 export async function createHabit(input: HabitInsert) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("habits").insert(input).select().single()
   return data as Habit | null
 }
 
 export async function updateHabit(id: string, input: HabitUpdate) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("habits").update(input).eq("id", id).select().single()
   return data as Habit | null
 }
 
 export async function deleteHabit(id: string) {
-  if (!isSupabaseConfigured()) return
   const supabase = await createServerClient()
   await supabase.from("habits").delete().eq("id", id)
 }
@@ -45,7 +40,6 @@ export async function deleteHabit(id: string) {
 // ── Habit Logs ──
 
 export async function getHabitLogs(habitId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("habit_logs")
@@ -56,7 +50,6 @@ export async function getHabitLogs(habitId: string) {
 }
 
 export async function getLogsForDate(workspaceId: string, date: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("habit_logs")
@@ -67,7 +60,6 @@ export async function getLogsForDate(workspaceId: string, date: string) {
 }
 
 export async function createHabitLog(input: HabitLogInsert) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("habit_logs").insert(input).select().single()
   return data as HabitLog | null

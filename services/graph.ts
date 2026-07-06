@@ -1,9 +1,8 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
+
 import type { GraphEdge, GraphEdgeInsert, EdgeType, EntityType } from "@/lib/supabase/types"
 
 export async function getEdges(workspaceId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("graph_edges")
@@ -14,7 +13,6 @@ export async function getEdges(workspaceId: string) {
 }
 
 export async function getOutgoingEdges(sourceType: EntityType, sourceId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("graph_edges")
@@ -25,7 +23,6 @@ export async function getOutgoingEdges(sourceType: EntityType, sourceId: string)
 }
 
 export async function getIncomingEdges(targetType: EntityType, targetId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("graph_edges")
@@ -36,14 +33,12 @@ export async function getIncomingEdges(targetType: EntityType, targetId: string)
 }
 
 export async function createEdge(input: GraphEdgeInsert) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("graph_edges").insert(input).select().single()
   return data as GraphEdge | null
 }
 
 export async function deleteEdge(id: string) {
-  if (!isSupabaseConfigured()) return
   const supabase = await createServerClient()
   await supabase.from("graph_edges").delete().eq("id", id)
 }

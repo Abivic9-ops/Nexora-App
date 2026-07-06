@@ -5,12 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { signInWithEmail, signInWithGoogle } from "@/lib/actions/auth"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
 import { ForgotPasswordDialog } from "@/components/forgot-password-dialog"
-import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 
 const signInSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -44,12 +44,10 @@ export function SignInForm() {
     if (result?.error) {
       setServerError(result.error)
       setPending(false)
+    } else {
+      toast.success("Signed in!")
     }
   })
-
-  const onGuest = () => {
-    router.push("/onboarding")
-  }
 
   return (
     <>
@@ -135,7 +133,13 @@ export function SignInForm() {
       <div className="flex flex-col gap-2">
         <button
           type="button"
-          onClick={() => signInWithGoogle()}
+          onClick={async () => {
+            setServerError("")
+            const result = await signInWithGoogle()
+            if (result?.error) {
+              setServerError(result.error)
+            }
+          }}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-border/60 bg-background px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
@@ -147,16 +151,6 @@ export function SignInForm() {
           Google
         </button>
 
-        {!isSupabaseConfigured() && (
-          <button
-            type="button"
-            onClick={onGuest}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border/40 bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-border/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <User size={14} />
-            Continue as guest
-          </button>
-        )}
       </div>
     </>
   )

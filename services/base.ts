@@ -1,15 +1,13 @@
+import { randomUUID } from "crypto"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function getCurrentUser() {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.auth.getUser()
   return data.user
 }
 
 export async function getActiveWorkspace(userId: string) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("memberships")
@@ -20,25 +18,31 @@ export async function getActiveWorkspace(userId: string) {
 }
 
 export async function ensureWorkspace(userId: string) {
-  if (!isSupabaseConfigured()) return null
   const existing = await getActiveWorkspace(userId)
   if (existing) return existing
 
   const supabase = await createServerClient()
-  const { data: workspace } = await supabase
+  const wid = randomUUID()
+
+  const { error: wsError } = await supabase
     .from("workspaces")
-    .insert({ name: "My Workspace" })
-    .select("id")
-    .single()
+    .insert({ id: wid, name: "My Workspace" })
 
-  if (!workspace) return null
+  if (wsError) {
+    console.error("Failed to create workspace:", wsError)
+    return null
+  }
 
-  const wid = workspace.id as string
-  await supabase.from("memberships").insert({
+  const { error: memberError } = await supabase.from("memberships").insert({
     workspace_id: wid,
     user_id: userId,
     role: "owner",
   })
+
+  if (memberError) {
+    console.error("Failed to create membership:", memberError)
+    return null
+  }
 
   return wid
 }

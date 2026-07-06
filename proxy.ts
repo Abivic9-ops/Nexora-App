@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 // Which routes require authentication?
 const protectedRoutes = [
-  "/dashboard", "/onboarding",
+  "/dashboard", "/onboarding", "/admin",
   "/tasks", "/projects", "/goals", "/habits",
   "/focus", "/notes", "/research", "/news",
   "/calendar", "/analytics", "/assistant", "/settings",
@@ -14,15 +13,8 @@ const protectedRoutes = [
 // Which routes should redirect to dashboard if already signed in?
 const authRoutes = ["/sign-in", "/sign-up"]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // ── Demo mode: let everyone through ──
-  // Until you configure real Supabase credentials in .env.local,
-  // the middleware skips all auth checks so you can navigate freely.
-  if (!isSupabaseConfigured()) {
-    return NextResponse.next()
-  }
 
   // Let auth callback and confirm routes through
   if (pathname.startsWith("/auth/")) {

@@ -1,9 +1,8 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
+
 import type { DecisionMemory, DecisionMemoryInsert } from "@/lib/supabase/types"
 
 export async function getDecisions(workspaceId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("decision_memory")
@@ -14,7 +13,6 @@ export async function getDecisions(workspaceId: string) {
 }
 
 export async function getDecisionsForEntity(entityType: string, entityId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("decision_memory")
@@ -26,14 +24,12 @@ export async function getDecisionsForEntity(entityType: string, entityId: string
 }
 
 export async function recordDecision(input: DecisionMemoryInsert) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("decision_memory").insert(input).select().single()
   return data as DecisionMemory | null
 }
 
 export async function updateOutcome(id: string, outcome: string) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("decision_memory")

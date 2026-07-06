@@ -5,11 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { signUpWithEmail, signInWithGoogle } from "@/lib/actions/auth"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react"
+import { signUpWithEmail, signInWithGoogle, resendVerificationEmail } from "@/lib/actions/auth"
+import { Mail, Lock, Eye, EyeOff, CheckCircle } from "lucide-react"
 
 const signUpSchema = z
   .object({
@@ -38,11 +38,17 @@ export function SignUpForm() {
     register,
     handleSubmit,
     setError,
+    clearErrors,
     formState: { errors },
   } = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: { email: "", password: "", confirmPassword: "" },
   })
+
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null)
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null)
+  const [resent, setResent] = useState(false)
+  const [resendError, setResendError] = useState("")
 
   const onSubmit = handleSubmit(async (values) => {
     setPending(true)
@@ -53,11 +59,55 @@ export function SignUpForm() {
     if (result?.error) {
       setError("root", { message: result.error })
       setPending(false)
+    } else if (result && "verificationRequired" in result) {
+      setVerificationEmail(result.email as string)
+      setVerificationMessage(result.message as string)
+      setPending(false)
+    } else {
+      toast.success("Account created!")
     }
   })
 
-  const onGuest = () => {
-    router.push("/onboarding")
+  const handleResend = async () => {
+    if (!verificationEmail) return
+    setResent(false)
+    setResendError("")
+    const result = await resendVerificationEmail(verificationEmail)
+    if (result?.error) {
+      setResendError(result.error)
+    } else {
+      setResent(true)
+    }
+  }
+
+  if (verificationEmail) {
+    return (
+      <>
+        <div className="mt-6 flex flex-col items-center gap-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+            <CheckCircle size={24} className="text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Check your email</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {verificationMessage ?? "We sent a verification link. Please check your inbox and click the link to continue."}
+          </p>
+          {resent ? (
+            <p className="text-xs text-primary">Verification email resent!</p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-xs text-primary hover:text-primary/80 underline underline-offset-2"
+            >
+              Didn&apos;t get it? Resend
+            </button>
+          )}
+          {resendError && (
+            <p className="text-xs text-destructive">{resendError}</p>
+          )}
+        </div>
+      </>
+    )
   }
 
   return (
@@ -173,7 +223,13 @@ export function SignUpForm() {
       <div className="flex flex-col gap-2">
         <button
           type="button"
-          onClick={() => signInWithGoogle()}
+          onClick={async () => {
+            clearErrors("root")
+            const result = await signInWithGoogle()
+            if (result?.error) {
+              setError("root", { message: result.error })
+            }
+          }}
           className="flex w-full items-center justify-center gap-2 rounded-lg border border-border/60 bg-background px-4 py-2 text-sm font-medium text-foreground transition-all hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
@@ -185,16 +241,6 @@ export function SignUpForm() {
           Google
         </button>
 
-        {!isSupabaseConfigured() && (
-          <button
-            type="button"
-            onClick={onGuest}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border/40 bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:border-border/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <User size={14} />
-            Continue as guest
-          </button>
-        )}
       </div>
     </>
   )

@@ -1,9 +1,8 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
+
 import type { EventHistory, EventHistoryInsert } from "@/lib/supabase/types"
 
 export async function getHistory(workspaceId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("event_history")
@@ -14,7 +13,6 @@ export async function getHistory(workspaceId: string) {
 }
 
 export async function getHistoryForEntity(entityType: string, entityId: string) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("event_history")
@@ -26,14 +24,12 @@ export async function getHistoryForEntity(entityType: string, entityId: string) 
 }
 
 export async function recordEvent(input: EventHistoryInsert) {
-  if (!isSupabaseConfigured()) return null
   const supabase = await createServerClient()
   const { data } = await supabase.from("event_history").insert(input).select().single()
   return data as EventHistory | null
 }
 
 export async function getRecentActivity(workspaceId: string, limit = 20) {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createServerClient()
   const { data } = await supabase
     .from("event_history")

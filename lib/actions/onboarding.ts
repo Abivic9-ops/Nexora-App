@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
+import { ensureWorkspace } from "@/services/base"
+import { ensureMembership } from "@/services/memberships"
 
 interface OnboardingData {
   persona: string
@@ -14,10 +15,6 @@ interface OnboardingData {
 }
 
 export async function saveOnboarding(data: OnboardingData) {
-  if (!isSupabaseConfigured()) {
-    redirect("/dashboard")
-  }
-
   const supabase = await createServerClient()
 
   const {
@@ -27,6 +24,13 @@ export async function saveOnboarding(data: OnboardingData) {
   if (!user) {
     return { error: "Not authenticated" }
   }
+
+  const workspaceId = await ensureWorkspace(user.id)
+  if (!workspaceId) {
+    return { error: "Failed to set up workspace." }
+  }
+
+  await ensureMembership(user.id, workspaceId)
 
   const { error } = await supabase
     .from("profiles")

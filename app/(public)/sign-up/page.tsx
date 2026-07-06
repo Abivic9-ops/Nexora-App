@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { SignUpForm } from "./sign-up-form"
-import { DemoBadge } from "@/components/demo-badge"
 
 export const metadata: Metadata = {
   title: "Sign Up",
@@ -11,7 +10,6 @@ export const metadata: Metadata = {
 export default function SignUpPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
-      <DemoBadge />
       <div className="w-full max-w-sm">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">

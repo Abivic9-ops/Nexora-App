@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { forgotPassword } from "@/lib/actions/auth"
-import { isSupabaseConfigured } from "@/lib/supabase/check"
 import { Mail, CheckCircle } from "lucide-react"
 
 export function ForgotPasswordDialog() {
@@ -27,12 +26,6 @@ export function ForgotPasswordDialog() {
     setPending(true)
 
     const formData = new FormData(e.currentTarget)
-
-    if (!isSupabaseConfigured()) {
-      setError("Password reset will be available once Supabase is configured.")
-      setPending(false)
-      return
-    }
 
     const result = await forgotPassword(formData)
     if (result?.error) {
