@@ -6,7 +6,6 @@ import { createClient as createServerClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/check"
 
 export async function signInWithEmail(formData: FormData) {
-  // ── Demo mode: skip Supabase, go straight to onboarding ──
   if (!isSupabaseConfigured()) {
     redirect("/onboarding")
   }
@@ -27,7 +26,6 @@ export async function signInWithEmail(formData: FormData) {
 }
 
 export async function signUpWithEmail(formData: FormData) {
-  // ── Demo mode: skip Supabase, go straight to onboarding ──
   if (!isSupabaseConfigured()) {
     redirect("/onboarding")
   }
@@ -54,7 +52,6 @@ export async function signUpWithEmail(formData: FormData) {
 }
 
 export async function signInWithGoogle() {
-  // ── Demo mode: skip Google OAuth, go straight to onboarding ──
   if (!isSupabaseConfigured()) {
     redirect("/onboarding")
   }
@@ -75,8 +72,26 @@ export async function signInWithGoogle() {
   redirect(data.url)
 }
 
+export async function forgotPassword(formData: FormData) {
+  if (!isSupabaseConfigured()) {
+    return { error: "Password reset requires Supabase to be configured." }
+  }
+
+  const supabase = await createServerClient()
+  const email = formData.get("email") as string
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback?next=/dashboard`,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function signOut() {
-  // ── Demo mode: just redirect to sign-in ──
   if (!isSupabaseConfigured()) {
     redirect("/sign-in")
   }

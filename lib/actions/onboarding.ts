@@ -14,9 +14,8 @@ interface OnboardingData {
 }
 
 export async function saveOnboarding(data: OnboardingData) {
-  // ── Demo mode: skip database, go straight to the user's default home ──
   if (!isSupabaseConfigured()) {
-    redirect(`/${data.defaultHome}`)
+    redirect("/dashboard")
   }
 
   const supabase = await createServerClient()
