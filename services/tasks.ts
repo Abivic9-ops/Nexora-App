@@ -1,56 +1,92 @@
-import { createClient as createServerClient } from "@/lib/supabase/server"
+import { createClient as createBrowserClient } from "@/lib/supabase/client"
 import type { Task, TaskInsert, TaskUpdate } from "@/lib/supabase/types"
 
-export async function getTasks(workspaceId: string) {
-  const supabase = await createServerClient()
-  const { data } = await supabase
+export type { Task, TaskInsert, TaskUpdate }
+export type TaskWithSubtasks = Task & { subtasks: Task[] }
+
+export async function createTask(
+  input: Omit<TaskInsert, "id" | "created_at" | "updated_at">,
+): Promise<Task | null> {
+  const supabase = createBrowserClient()
+
+  const { data, error } = await supabase
     .from("tasks")
+    .insert({
+      ...input,
+      position: Math.floor(Date.now() / 1000),
+    })
     .select("*")
-    .eq("workspace_id", workspaceId)
-    .order("position", { ascending: true })
-  return (data ?? []) as Task[]
+    .single()
+
+  if (error) {
+    console.error("createTask error:", error)
+    return null
+  }
+
+  return data as unknown as Task
 }
 
-export async function getTaskById(id: string) {
-  const supabase = await createServerClient()
-  const { data } = await supabase.from("tasks").select("*").eq("id", id).single()
-  return data as Task | null
-}
+export async function updateTask(
+  id: string,
+  updates: TaskUpdate,
+): Promise<boolean> {
+  const supabase = createBrowserClient()
 
-export async function getTasksByProject(projectId: string) {
-  const supabase = await createServerClient()
-  const { data } = await supabase
+  const { error } = await supabase
     .from("tasks")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("position", { ascending: true })
-  return (data ?? []) as Task[]
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+
+  if (error) {
+    console.error("updateTask error:", error)
+    return false
+  }
+
+  return true
 }
 
-export async function getTasksByStatus(workspaceId: string, status: Task["status"]) {
-  const supabase = await createServerClient()
-  const { data } = await supabase
+export async function deleteTask(id: string): Promise<boolean> {
+  const supabase = createBrowserClient()
+
+  const { error } = await supabase
     .from("tasks")
-    .select("*")
-    .eq("workspace_id", workspaceId)
-    .eq("status", status)
-    .order("position", { ascending: true })
-  return (data ?? []) as Task[]
+    .delete()
+    .eq("id", id)
+
+  if (error) {
+    console.error("deleteTask error:", error)
+    return false
+  }
+
+  return true
 }
 
-export async function createTask(input: TaskInsert) {
-  const supabase = await createServerClient()
-  const { data } = await supabase.from("tasks").insert(input).select().single()
-  return data as Task | null
-}
+export async function moveTask(
+  id: string,
+  status: Task["status"],
+  position: number,
+): Promise<boolean> {
+  const supabase = createBrowserClient()
 
-export async function updateTask(id: string, input: TaskUpdate) {
-  const supabase = await createServerClient()
-  const { data } = await supabase.from("tasks").update(input).eq("id", id).select().single()
-  return data as Task | null
-}
+  const updates: TaskUpdate = {
+    status,
+    position,
+    updated_at: new Date().toISOString(),
+  }
 
-export async function deleteTask(id: string) {
-  const supabase = await createServerClient()
-  await supabase.from("tasks").delete().eq("id", id)
+  if (status === "completed") {
+    updates.completed_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update(updates)
+    .eq("id", id)
+
+  if (error) {
+    console.error("moveTask error:", error)
+    return false
+  }
+
+  return true
 }
