@@ -82,7 +82,7 @@ export function NewTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<span className="inline-flex" />}>
+      <DialogTrigger>
         {children ?? (
           <Button size="sm">
             <Plus size={14} />

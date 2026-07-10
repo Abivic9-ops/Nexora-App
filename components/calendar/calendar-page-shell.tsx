@@ -127,13 +127,10 @@ export function CalendarPageShell({
           </p>
         </div>
         <NewEventDialog defaultDate={format(new Date(), "yyyy-MM-dd")} onCreateEvent={handleCreateEvent}>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
-          >
+          <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90">
             <Plus size={16} />
             New event
-          </button>
+          </span>
         </NewEventDialog>
       </div>
 

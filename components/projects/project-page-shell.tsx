@@ -113,13 +113,10 @@ export function ProjectPageShell({
           </p>
         </div>
         <NewProjectDialog onCreateProject={handleCreateProject}>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90"
-          >
+          <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-medium text-primary-foreground transition-all hover:bg-primary/90">
             <Plus size={14} />
             New project
-          </button>
+          </span>
         </NewProjectDialog>
       </div>
 

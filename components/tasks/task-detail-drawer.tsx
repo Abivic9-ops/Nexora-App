@@ -176,7 +176,7 @@ export function TaskDetailDrawer({
         <DrawerHeader className="border-b border-border/40 px-5 py-4">
           <div className="flex items-center justify-between">
             <DrawerTitle className="text-base font-semibold">Task details</DrawerTitle>
-            <DrawerClose render={<span className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer" />}>
+            <DrawerClose render={<button type="button" className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground" />}>
               <X size={14} />
             </DrawerClose>
           </div>
