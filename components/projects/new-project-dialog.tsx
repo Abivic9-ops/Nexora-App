@@ -16,30 +16,29 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus } from "lucide-react"
+import type { ProjectStatus } from "@/lib/supabase/types"
 
-const taskSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200),
-  description: z.string().max(2000).optional(),
-  priority: z.enum(["urgent", "high", "medium", "low"]),
+const projectSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  description: z.string().max(500).optional(),
+  status: z.enum(["active", "paused", "completed", "archived"]),
   due_date: z.string().optional(),
 })
 
-type TaskFormValues = z.infer<typeof taskSchema>
+type ProjectFormValues = z.infer<typeof projectSchema>
 
-const PRIORITY_OPTIONS = [
-  { value: "urgent", label: "Urgent", color: "text-red-500" },
-  { value: "high", label: "High", color: "text-amber-500" },
-  { value: "medium", label: "Medium", color: "text-blue-500" },
-  { value: "low", label: "Low", color: "text-muted-foreground" },
-] as const
+const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
+  { value: "active", label: "Active" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
+  { value: "archived", label: "Archived" },
+]
 
-export function NewTaskDialog({
-  defaultStatus,
-  onCreateTask,
+export function NewProjectDialog({
+  onCreateProject,
   children,
 }: {
-  defaultStatus: string
-  onCreateTask: (data: TaskFormValues & { status: string }) => Promise<void>
+  onCreateProject: (data: ProjectFormValues) => Promise<void>
   children?: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
@@ -52,87 +51,85 @@ export function NewTaskDialog({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema),
+  } = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
     defaultValues: {
-      title: "",
+      name: "",
       description: "",
-      priority: "medium",
+      status: "active",
       due_date: "",
     },
   })
 
-  const selectedPriority = watch("priority")
+  const selectedStatus = watch("status")
 
   const onSubmit = handleSubmit(async (values) => {
     setPending(true)
-    await onCreateTask({ ...values, status: defaultStatus })
+    await onCreateProject(values)
     setPending(false)
     setOpen(false)
     reset()
-    toast.success("Task created")
+    toast.success("Project created")
   })
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen)
-    if (isOpen) {
-      reset()
-    }
+    if (isOpen) reset()
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<span className="inline-flex" />}>
+      <DialogTrigger nativeButton={false} render={<span className="inline-flex" />}>
         {children ?? (
           <Button size="sm">
             <Plus size={14} />
-            New task
+            New project
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New task</DialogTitle>
+          <DialogTitle>New project</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="title" className="text-xs font-medium text-foreground">
-              Title
+            <label htmlFor="project-name" className="text-xs font-medium text-foreground">
+              Name
             </label>
             <Input
-              id="title"
-              placeholder="What needs to be done?"
+              id="project-name"
+              placeholder="Project name"
               className="mt-1"
-              {...register("title")}
+              {...register("name")}
             />
-            {errors.title && (
-              <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
+            {errors.name && (
+              <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="description" className="text-xs font-medium text-foreground">
+            <label htmlFor="project-description" className="text-xs font-medium text-foreground">
               Description
             </label>
             <Textarea
-              id="description"
-              placeholder="Add details..."
-              className="mt-1 min-h-20"
+              id="project-description"
+              placeholder="Optional description..."
+              className="mt-1 min-h-16"
               {...register("description")}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-foreground">Priority</label>
-              <div className="mt-1 flex gap-1.5">
-                {PRIORITY_OPTIONS.map((opt) => (
+              <label className="text-xs font-medium text-foreground">Status</label>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {STATUS_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setValue("priority", opt.value, { shouldValidate: true })}
-                    className={`flex-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-all ${
-                      selectedPriority === opt.value
+                    onClick={() => setValue("status", opt.value, { shouldValidate: true })}
+                    className={`rounded-md border px-2 py-1.5 text-xs font-medium transition-all ${
+                      selectedStatus === opt.value
                         ? "border-primary/50 bg-primary/5 text-primary"
                         : "border-border/40 text-muted-foreground hover:border-border"
                     }`}
@@ -143,11 +140,11 @@ export function NewTaskDialog({
               </div>
             </div>
             <div>
-              <label htmlFor="due_date" className="text-xs font-medium text-foreground">
+              <label htmlFor="project-due-date" className="text-xs font-medium text-foreground">
                 Due date
               </label>
               <Input
-                id="due_date"
+                id="project-due-date"
                 type="date"
                 className="mt-1"
                 {...register("due_date")}
@@ -165,7 +162,7 @@ export function NewTaskDialog({
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={pending}>
-              {pending ? "Creating..." : "Create task"}
+              {pending ? "Creating..." : "Create project"}
             </Button>
           </div>
         </form>
@@ -173,5 +170,3 @@ export function NewTaskDialog({
     </Dialog>
   )
 }
-
-export type { TaskFormValues }
