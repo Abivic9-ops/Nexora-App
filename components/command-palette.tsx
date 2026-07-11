@@ -82,6 +82,9 @@ export function CommandPalette() {
           <CommandItem onSelect={() => navigate("/news")}>
             News
           </CommandItem>
+          <CommandItem onSelect={() => navigate("/analytics")}>
+            Analytics
+          </CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>

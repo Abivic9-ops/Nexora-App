@@ -153,13 +153,17 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics | null> {
     targetDate: g.target_date,
   }))
 
+  const profileResult = await supabase
+    .from("profiles")
+    .select("score_weights")
+    .eq("id", user.id)
+    .single()
+
+  const weights = parseWeights(profileResult.data?.score_weights)
   const weeklyTaskCount = tasksCompletedWeek.reduce((s, d) => s + d.count, 0)
-  const weeklyFocusHours = focusMinutesWeek.reduce((s, d) => s + d.minutes, 0) / 60
-  const executionScore = computeExecutionScore(
-    tasksCompletedToday, tasksCompletedWeek,
-    focusMinutesToday, focusMinutesWeek,
-    longestHabitStreak
-  )
+  const weeklyFocusMin = focusMinutesWeek.reduce((s, d) => s + d.minutes, 0)
+  const weeklyHabitLogs = habits.reduce((s, h) => s + h.streak_count, 0)
+  const executionScore = computeExecutionScore(weights, weeklyTaskCount, weeklyFocusMin, weeklyHabitLogs)
 
   return {
     tasksCompletedToday,
@@ -173,17 +177,27 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics | null> {
   }
 }
 
+function parseWeights(raw: unknown): { tasks: number; focus: number; habits: number } {
+  if (raw && typeof raw === "object" && "tasks" in raw) {
+    const w = raw as Record<string, number>
+    const t = typeof w.tasks === "number" ? w.tasks : 0.5
+    const f = typeof w.focus === "number" ? w.focus : 0.3
+    const h = typeof w.habits === "number" ? w.habits : 0.2
+    const sum = t + f + h
+    if (sum === 0) return { tasks: 0.5, focus: 0.3, habits: 0.2 }
+    return { tasks: t / sum, focus: f / sum, habits: h / sum }
+  }
+  return { tasks: 0.5, focus: 0.3, habits: 0.2 }
+}
+
 function computeExecutionScore(
-  _tasksToday: number,
-  tasksWeek: { count: number }[],
-  _focusToday: number,
-  focusWeek: { minutes: number }[],
-  _habitStreak: number,
+  weights: { tasks: number; focus: number; habits: number },
+  totalTasksWeek: number,
+  totalFocusMinWeek: number,
+  totalHabitLogsWeek: number,
 ): number {
-  const totalTasks = tasksWeek.reduce((s, d) => s + d.count, 0)
-  const totalFocusMin = focusWeek.reduce((s, d) => s + d.minutes, 0)
-  const taskScore = Math.min(totalTasks / 14, 1) * 40
-  const focusScore = Math.min(totalFocusMin / 600, 1) * 30
-  const habitScore = 0
+  const taskScore = Math.min(totalTasksWeek / 14, 1) * weights.tasks * 100
+  const focusScore = Math.min(totalFocusMinWeek / 600, 1) * weights.focus * 100
+  const habitScore = Math.min(totalHabitLogsWeek / 7, 1) * weights.habits * 100
   return Math.round(taskScore + focusScore + habitScore)
 }
