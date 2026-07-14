@@ -268,6 +268,34 @@ export type EventHistoryInsert = {
   new_values?: Json | null; summary?: string | null; created_at?: string
 }
 
+export type AssistantThread = {
+  id: string; workspace_id: string; user_id: string; title: string
+  pinned: boolean; created_at: string; updated_at: string
+}
+export type AssistantThreadInsert = {
+  id?: string; workspace_id: string; user_id: string; title?: string
+  pinned?: boolean; created_at?: string; updated_at?: string
+}
+export type AssistantThreadUpdate = {
+  id?: string; workspace_id?: string; user_id?: string; title?: string
+  pinned?: boolean; created_at?: string; updated_at?: string
+}
+
+export type MessageRole = "user" | "assistant" | "system"
+
+export type AssistantMessage = {
+  id: string; thread_id: string; workspace_id: string; user_id: string
+  role: MessageRole; content: string; model: string | null
+  token_count: number | null; decision_id: string | null
+  metadata: Json | null; created_at: string
+}
+export type AssistantMessageInsert = {
+  id?: string; thread_id: string; workspace_id: string; user_id: string
+  role: MessageRole; content: string; model?: string | null
+  token_count?: number | null; decision_id?: string | null
+  metadata?: Json | null; created_at?: string
+}
+
 // ── Database interface (for Supabase client generic) ──
 
 export interface Database {
@@ -323,6 +351,12 @@ export interface Database {
       }
       event_history: {
         Row: EventHistory; Insert: EventHistoryInsert; Update: never
+      }
+      assistant_threads: {
+        Row: AssistantThread; Insert: AssistantThreadInsert; Update: AssistantThreadUpdate
+      }
+      assistant_messages: {
+        Row: AssistantMessage; Insert: AssistantMessageInsert; Update: never
       }
     }
     Views: Record<string, never>

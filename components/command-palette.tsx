@@ -85,6 +85,9 @@ export function CommandPalette() {
           <CommandItem onSelect={() => navigate("/analytics")}>
             Analytics
           </CommandItem>
+          <CommandItem onSelect={() => navigate("/assistant")}>
+            Assistant
+          </CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>
